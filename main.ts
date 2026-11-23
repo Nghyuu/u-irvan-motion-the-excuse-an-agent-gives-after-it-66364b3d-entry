@@ -1,20 +1,12 @@
-import { chmodSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+// Entrypoint: copies entry.txt (next to this script) byte-for-byte to
+// $MAKEFUN_OUTPUT_DIR/entry.txt. Node standard library only.
+import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-// Copy entry.txt verbatim to the harness output directory.
-const dir = dirname(fileURLToPath(import.meta.url));
-const outDir = process.env.MAKEFUN_OUTPUT_DIR;
-if (!outDir) {
-  throw new Error("MAKEFUN_OUTPUT_DIR is not set");
-}
-const text = readFileSync(join(dir, "entry.txt"), "utf8");
-const chars = [...text.trimEnd()].length;
-if (chars < 1 || chars > 200) {
-  throw new Error(`entry.txt must be 1-200 characters, got ${chars}`);
-}
+const entryPath = join(dirname(fileURLToPath(import.meta.url)), "entry.txt");
+const text = readFileSync(entryPath, "utf8");
+if (text.trim().length === 0) throw new Error("entry.txt is empty");
+const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? "/output";
 mkdirSync(outDir, { recursive: true });
-const outPath = join(outDir, "entry.txt");
-writeFileSync(outPath, text);
-// The harness collects outputs as another user, so leave it world-readable.
-chmodSync(outPath, 0o644);
+writeFileSync(join(outDir, "entry.txt"), text, "utf8");
